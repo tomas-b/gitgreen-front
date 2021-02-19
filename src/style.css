@@ -1,0 +1,28 @@
+* {
+    box-sizing: content-box;
+    margin:0;
+    padding:0;
+}
+
+.git-grid {
+  display: grid;
+  grid-template-columns: repeat(53, 11px);
+  grid-template-rows: repeat(7, 11px);
+  grid-auto-flow: column;
+  gap: 4px 4px;
+}
+
+.git-grid .box {
+    background:#ebedf0;
+    border-radius: 1px;
+}
+
+.git-grid .box.l0 { background:#ebedf0 }
+.git-grid .box.l1 { background:#9be9a8 }
+.git-grid .box.l2 { background:#40c463}
+.git-grid .box.l3 { background:#30a14e}
+.git-grid .box.l4 { background:#216e39}
+
+button.active {
+  background: blue;
+}
