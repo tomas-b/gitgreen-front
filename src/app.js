@@ -10,7 +10,7 @@ const Calendar = props => {
 const App = props => {
 
     let [calendar, setCalendar] = useState(null)
-    let [tool, setTool] = useState(false)
+    let [tool, setTool] = useState('add')
     let [mousedown, setMousedown] = useState(false)
     let [commitsCommand, setCommitsCommand] = useState('')
     let [origin, setOrigin] = useState('https://github.com/<username>/<repo>')
@@ -19,6 +19,8 @@ const App = props => {
         let res = await fetch('https://gitgreen.herokuapp.com/user/tomas-b')
         let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
         setCalendar(newfield)
+        window.addEventListener('keydown', e=>{ if(e.key == 'Shift') setTool('remove') })
+        window.addEventListener('keyup', e=>{ if(e.key == 'Shift') setTool('add') })
     }, [])
 
     if (!calendar) return <b>loadin'</b>;
@@ -29,6 +31,16 @@ const App = props => {
         let current = + calendar[i].level + calendar[i].added;
         if(tool == 'add' && current < 4) calendar[i].added += 1;
         if(tool == 'remove' && calendar[i].added > 0) calendar[i].added -= 1;
+        setCalendar([...calendar])
+    }
+
+    const clickBox = i => {
+        let current = + calendar[i].level + calendar[i].added;
+        if(current < 4) {
+            calendar[i].added += 1;
+        } else {
+            calendar[i].added = 0;
+        }
         setCalendar([...calendar])
     }
 
@@ -81,7 +93,7 @@ const App = props => {
     return <>
         <div className='git-grid' onMouseDown={()=>setMousedown(true)} onMouseUp={()=>setMousedown(false)}>
         {calendar.map( (day, i) =>
-            <div key={day.date} onMouseMove={()=>{drawBox(i)}} className={`box l${+day.level+day.added}`}></div>
+            <div key={day.date} onClick={()=>{clickBox(i)}} onMouseMove={()=>{drawBox(i)}} className={`box l${+day.level+day.added}`}></div>
         )}
         </div>
         <hr/>
