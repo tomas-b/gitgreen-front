@@ -7,11 +7,9 @@ const App = props => {
 
     let [calendar, setCalendar] = useState(null)
     let [user, setUser] = useState(null)
-    let [commitsCommand, setCommitsCommand] = useState('')
     let [origin, setOrigin] = useState('')
 
     const queryUser = async user => {
-        setCalendar(null)
         let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
         let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
         setUser(user)
@@ -20,7 +18,6 @@ const App = props => {
     }
 
     const generateCommits = () => {
-
         let top = 0;
         for(let day of calendar) {
             if(+day.count > top) {
