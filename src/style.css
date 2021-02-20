@@ -4,7 +4,7 @@
     padding:0;
 }
 
-body, input {
+body, input, textarea {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -66,4 +66,55 @@ button.active {
   text-align: right;
   margin:1em;
   font-size:.7em
+}
+
+#origin {
+  margin-left:1.2em
+}
+
+#origin svg {
+  position: absolute;
+  margin:.4em -1.2em;
+}
+
+#origin input {
+  width: 500px;
+  border: 1px solid rgba(0,0,0,.1);
+  color:rgba(0,0,0,.6);
+  padding:.3em;
+  margin:0 .5em
+}
+
+textarea {
+  margin:.5em 0;
+  width: 99%;
+  padding:.2em 1em;
+  resize:none;
+  height: 150px;
+  overflow-y:scroll;
+  border: 1px solid rgba(0,0,0,.1);
+  background:white;
+  color:rgba(0,0,0,.7);
+  font-family: monospace;
+}
+
+#copy {
+  position: fixed;
+  background: rgba(0,0,0,.1);
+  margin:1em .5em;
+  padding:.5em;
+  border: none;
+  border-bottom:1px solid rgba(0,0,0,.3);
+  border-right:1px solid rgba(0,0,0,.3);
+  opacity:.1;
+  transition: all .3s;
+}
+
+#copy:hover {
+  cursor:pointer;
+  opacity:1;
+}
+
+#copy:active {
+  background:#40c463
 }
