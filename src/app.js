@@ -3,15 +3,9 @@ import ReactDOM from 'react-dom'
 import 'babel-polyfill' // polyfill async/await
 import './style.css'
 
-const Calendar = props => {
-
-}
-
 const App = props => {
 
     let [calendar, setCalendar] = useState(null)
-    let [tool, setTool] = useState('add')
-    let [mousedown, setMousedown] = useState(false)
     let [commitsCommand, setCommitsCommand] = useState('')
     let [origin, setOrigin] = useState('https://github.com/<username>/<repo>')
 
@@ -19,38 +13,9 @@ const App = props => {
         let res = await fetch('https://gitgreen.herokuapp.com/user/tomas-b')
         let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
         setCalendar(newfield)
-        window.addEventListener('keydown', e=>{ if(e.key == 'Shift') setTool('remove') })
-        window.addEventListener('keyup', e=>{ if(e.key == 'Shift') setTool('add') })
     }, [])
 
     if (!calendar) return <b>loadin'</b>;
-
-    const drawBox = i => {
-        if(!tool) return;
-        if(!mousedown) return;
-        let current = + calendar[i].level + calendar[i].added;
-        if(tool == 'add' && current < 4) calendar[i].added += 1;
-        if(tool == 'remove' && calendar[i].added > 0) calendar[i].added -= 1;
-        setCalendar([...calendar])
-    }
-
-    const clickBox = i => {
-        let current = + calendar[i].level + calendar[i].added;
-        if(current < 4) {
-            calendar[i].added += 1;
-        } else {
-            calendar[i].added = 0;
-        }
-        setCalendar([...calendar])
-    }
-
-    const pickTool = t => {
-        if( tool == t ) {
-            setTool(false);
-        } else {
-            setTool(t)
-        }
-    }
 
     const generateCommits = () => {
 
@@ -91,14 +56,11 @@ const App = props => {
     }
 
     return <>
-        <div className='git-grid' onMouseDown={()=>setMousedown(true)} onMouseUp={()=>setMousedown(false)}>
-        {calendar.map( (day, i) =>
-            <div key={day.date} onClick={()=>{clickBox(i)}} onMouseMove={()=>{drawBox(i)}} className={`box l${+day.level+day.added}`}></div>
-        )}
-        </div>
+        <SearchBox/>
+        <Calendar calendar={calendar} setCalendar={setCalendar}/>
         <hr/>
-        <button onClick={()=>pickTool('add')} className={tool=='add'?'active':''}>add++</button>
-        <button onClick={()=>pickTool('remove')} className={tool=='remove'?'active':''}>remove-</button>
+        click - draw <br/>
+        click + shift - delete
         <hr/>
         <input defaultValue={origin} onChange={e=>setOrigin(e.target.value)}></input>
         <button onClick={generateCommits}>Generate!</button>
@@ -106,6 +68,51 @@ const App = props => {
         <textarea readOnly value={commitsCommand}></textarea>
     </>
 
+}
+
+const SearchBox = props => {
+    
+    return <>
+        <input type='text' placeholder='your github username...' />
+    </>
+}
+
+const Calendar = props => {
+
+    let [tool, setTool] = useState('add')
+    let [mousedown, setMousedown] = useState(false)
+
+    useEffect(()=>{
+        window.addEventListener('keydown', e=>{ if(e.key == 'Shift') setTool('remove') })
+        window.addEventListener('keyup', e=>{ if(e.key == 'Shift') setTool('add') })
+    },[])
+
+    const drawBox = i => {
+        if(!tool) return;
+        if(!mousedown) return;
+        let current = + props.calendar[i].level + props.calendar[i].added;
+        if(tool == 'add' && current < 4) props.calendar[i].added += 1;
+        if(tool == 'remove' && props.calendar[i].added > 0) props.calendar[i].added -= 1;
+        props.setCalendar([...props.calendar])
+    }
+
+    const clickBox = i => {
+        let current = + props.calendar[i].level + props.calendar[i].added;
+        if(current < 4) {
+            props.calendar[i].added += 1;
+        } else {
+            props.calendar[i].added = 0;
+        }
+        props.setCalendar([...props.calendar])
+    }
+
+    return <>
+        <div className='git-grid' onMouseDown={()=>setMousedown(true)} onMouseUp={()=>setMousedown(false)}>
+        {props.calendar.map( (day, i) =>
+            <div key={day.date} onClick={()=>{clickBox(i)}} onMouseMove={()=>{drawBox(i)}} className={`box l${+day.level+day.added}`}></div>
+        )}
+        </div>
+    </>
 }
 
 ReactDOM.render(<App/>, document.querySelector('#root'))
