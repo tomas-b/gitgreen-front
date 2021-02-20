@@ -6,16 +6,16 @@ import './style.css'
 const App = props => {
 
     let [calendar, setCalendar] = useState(null)
+    let [user, setUser] = useState('')
     let [commitsCommand, setCommitsCommand] = useState('')
     let [origin, setOrigin] = useState('https://github.com/<username>/<repo>')
 
-    useEffect(async ()=>{
-        let res = await fetch('https://gitgreen.herokuapp.com/user/tomas-b')
+    const queryUser = async user => {
+        let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
         let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
+        setUser(user)
         setCalendar(newfield)
-    }, [])
-
-    if (!calendar) return <b>loadin'</b>;
+    }
 
     const generateCommits = () => {
 
@@ -56,8 +56,8 @@ const App = props => {
     }
 
     return <>
-        <SearchBox/>
-        <Calendar calendar={calendar} setCalendar={setCalendar}/>
+        <SearchBox queryUser={queryUser}/>
+        {calendar ? <Calendar calendar={calendar} setCalendar={setCalendar}/> : <></> }
         <hr/>
         click - draw <br/>
         click + shift - delete
@@ -71,9 +71,16 @@ const App = props => {
 }
 
 const SearchBox = props => {
-    
+
+    let [user, setUser] = useState(null)
+
+    useEffect(()=>{
+        const endOfTypingDelay = setTimeout(()=>{props.queryUser(user)}, 500)
+        return () => clearTimeout(endOfTypingDelay)
+    },[user])
+
     return <>
-        <input type='text' placeholder='your github username...' />
+        <input type='text' placeholder='your github username...' onChange={e=>setUser(e.target.value)} />
     </>
 }
 
