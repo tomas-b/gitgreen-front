@@ -6,15 +6,17 @@ import './style.css'
 const App = props => {
 
     let [calendar, setCalendar] = useState(null)
-    let [user, setUser] = useState('')
+    let [user, setUser] = useState(null)
     let [commitsCommand, setCommitsCommand] = useState('')
-    let [origin, setOrigin] = useState('https://github.com/<username>/<repo>')
+    let [origin, setOrigin] = useState('')
 
     const queryUser = async user => {
+        setCalendar(null)
         let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
         let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
         setUser(user)
         setCalendar(newfield)
+        setOrigin(`https://github.com/${user}/greens.git`)
     }
 
     const generateCommits = () => {
@@ -55,18 +57,20 @@ const App = props => {
         setCommitsCommand(commands.join('\n'))
     }
 
-    return <>
-        <SearchBox queryUser={queryUser}/>
-        {calendar ? <Calendar calendar={calendar} setCalendar={setCalendar}/> : <></> }
-        <hr/>
-        click - draw <br/>
-        click + shift - delete
-        <hr/>
-        <input defaultValue={origin} onChange={e=>setOrigin(e.target.value)}></input>
-        <button onClick={generateCommits}>Generate!</button>
-        <br/>
-        <textarea readOnly value={commitsCommand}></textarea>
-    </>
+    return <div className='layout'>
+            <SearchBox queryUser={queryUser}/>
+            <Calendar calendar={calendar} setCalendar={setCalendar} user={user}/>
+            <div className='clickInfo'>
+            click - draw <br/>
+            click + shift - delete
+            </div>
+            <div className='generator'>
+                REMOTE: <input defaultValue={origin} onChange={e=>setOrigin(e.target.value)}/>
+                <button onClick={generateCommits}>win</button>
+                <button onClick={generateCommits}>linux</button>
+                <textarea readOnly value={commitsCommand}></textarea>
+            </div>
+    </div>
 
 }
 
@@ -75,13 +79,16 @@ const SearchBox = props => {
     let [user, setUser] = useState(null)
 
     useEffect(()=>{
-        const endOfTypingDelay = setTimeout(()=>{props.queryUser(user)}, 500)
-        return () => clearTimeout(endOfTypingDelay)
+        if(user!==null) {
+            const endOfTypingDelay = setTimeout(()=>{props.queryUser(user)}, 500)
+            return () => clearTimeout(endOfTypingDelay)
+        }
     },[user])
 
-    return <>
+    return <div id='searchbox'>
+        <span>@</span>
         <input type='text' placeholder='your github username...' onChange={e=>setUser(e.target.value)} />
-    </>
+    </div>
 }
 
 const Calendar = props => {
@@ -111,6 +118,18 @@ const Calendar = props => {
             props.calendar[i].added = 0;
         }
         props.setCalendar([...props.calendar])
+    }
+
+
+    if (props.calendar == null) {
+        // is props.user !== null then ajax request waiting
+        return <>
+            <div className='git-grid'>
+            {Array(371).fill(null).map( (day, i) =>
+                <div key={i} className={`box`}></div>
+            )}
+            </div>
+            </>
     }
 
     return <>
