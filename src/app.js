@@ -10,9 +10,9 @@ const App = props => {
     let [origin, setOrigin] = useState('')
 
     const queryUser = async user => {
+        setUser(user)
         let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
         let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
-        setUser(user)
         setCalendar(newfield)
         setOrigin(`https://github.com/${user}/greens.git`)
     }
@@ -144,8 +144,9 @@ const Calendar = props => {
 
     if (props.calendar == null) {
         // is props.user !== null then ajax request waiting
+        console.log(props)
         return <>
-            <div className='git-grid'>
+            <div className={`git-grid ${ props?.user !== null ? 'git-loading' : 'git-idle' }`}>
             {Array(371).fill(null).map( (day, i) =>
                 <div key={i} className={`box`}></div>
             )}
