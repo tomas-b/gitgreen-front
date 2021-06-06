@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import ReactDOM from 'react-dom'
+import axios from 'axios'
 import 'babel-polyfill' // polyfill async/await
 import './style.css'
 
@@ -11,8 +12,17 @@ const App = props => {
 
     const queryUser = async user => {
         setUser(user)
-        let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
-        let newfield = (await res.json()).map(day=>{ day.added = 0; return day })
+        // let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
+        let res = await axios({
+            url: "https://wrapapi.com/use/tomas-b/github/grid/latest",
+            method: 'post',
+            data: {
+                "wrapAPIKey": "eF1EOVpNlFuSQfuIqDmrw2Fp1ZT3LZqy",
+                "username": user
+            }
+        })
+
+        let newfield = res.data.map(day=>{ day.added = 0; return day })
         setCalendar(newfield)
         setOrigin(`https://github.com/${user}/greens.git`)
     }
