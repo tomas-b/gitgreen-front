@@ -134,3 +134,15 @@ button.active {
   50% { background:#216e39}
   100% { background:#ebedf0 }
 }
+
+.loading_spinner {
+  display:grid;
+  justify-content: center;
+  align-items: center;
+  font-size:30px;
+}
+
+.loading_spinner svg {
+  color: green;
+  margin: 40px;
+}

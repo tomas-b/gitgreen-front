@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import ReactDOM from "react-dom";
 import axios from "axios";
 import queryString from "query-string";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner, faCheckCircle, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import "babel-polyfill"; // polyfill async/await
 import "./style.css";
 
@@ -89,18 +91,41 @@ const App = (props) => {
 const GithubCB = ({ setCalendar, setUser }) => {
   let [commits, setCommits] = useState(window.localStorage.getItem("commits"));
   const { code } = queryString.parse(location.search);
+  let [loading, setLoading] = useState(true)
+  let [success, setSuccess] = useState(false)
+  let url = `https://gitgreen.herokuapp.com/cb/${code}?commmits=${commits}`;
 
   useEffect(() => {
+
     setCalendar(JSON.parse(window.localStorage.getItem("calendar")))
     setUser(JSON.parse(window.localStorage.getItem("user")));
+
+    axios.get(url)
+    .then(response=>{
+      console.log(response);
+      setSuccess(true)
+      setLoading(false)
+    })
+    .catch(response=>{
+      console.error(response);
+      setSuccess(false)
+      setLoading(false)
+    })
+
   }, []);
 
-  let url = `https://gitgreen.herokuapp.com/cb/${code}?commmits=${commits}`;
 //   let url = `http://localhost:5000/cb/${code}?commmits=${commits}`;
   return (
-    <>
-      <a href={url}>{url}</a>
-    </>
+    <div className='loading_spinner'>
+      {loading ?
+      <FontAwesomeIcon
+        icon={faSpinner}
+        spin={true}
+      /> :
+      <FontAwesomeIcon
+        icon={success ? faCheckCircle : faExclamationTriangle }
+      /> }
+    </div>
   );
 };
 

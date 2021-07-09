@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/react-fontawesome": "^0.1.14",
     "@rehooks/local-storage": "^2.4.1",
     "@svgr/parcel-plugin-svgr": "^5.5.0",
     "axios": "^0.21.1",
