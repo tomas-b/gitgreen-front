@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "parcel --port 9000 index.html",
-    "build": "parcel build index.html && echo '/* /index.html  200' | cat >build/_redirects"
+    "build": "parcel build index.html"
   },
   "keywords": [],
   "author": "",
