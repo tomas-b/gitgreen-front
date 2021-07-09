@@ -58,7 +58,7 @@ const App = (props) => {
       JSON.stringify(generateCommits(calendar))
     );
     window.location =
-      "https://github.com/login/oauth/authorize?client_id=0d5dbf7a901181653dd5&scope=public_repo";
+      "https://github.com/login/oauth/authorize?client_id=0d5dbf7a901181653dd5&scope=public_repo user:email";
   };
 
   return (
@@ -96,6 +96,7 @@ const GithubCB = ({ setCalendar, setUser }) => {
   }, []);
 
   let url = `https://gitgreen.herokuapp.com/cb/${code}?commmits=${commits}`;
+//   let url = `http://localhost:5000/cb/${code}?commmits=${commits}`;
   return (
     <>
       <a href={url}>{url}</a>
