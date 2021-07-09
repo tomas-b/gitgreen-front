@@ -5,16 +5,20 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel index.html"
+    "start": "parcel --port 9000 index.html"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@rehooks/local-storage": "^2.4.1",
+    "@svgr/parcel-plugin-svgr": "^5.5.0",
     "axios": "^0.21.1",
     "babel-polyfill": "^6.26.0",
+    "query-string": "^7.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-router-dom": "^5.2.0",
     "style.css": "^1.0.0"
   },
   "devDependencies": {

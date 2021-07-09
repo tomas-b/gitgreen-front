@@ -1,176 +1,230 @@
-import React, { useEffect, useState, useRef } from 'react'
-import ReactDOM from 'react-dom'
-import axios from 'axios'
-import 'babel-polyfill' // polyfill async/await
-import './style.css'
+import React, { useEffect, useState, useRef } from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import ReactDOM from "react-dom";
+import axios from "axios";
+import queryString from "query-string";
+import "babel-polyfill"; // polyfill async/await
+import "./style.css";
 
-const App = props => {
+const App = (props) => {
+  let [calendar, setCalendar] = useState(null);
+  let [user, setUser] = useState(null);
 
-    let [calendar, setCalendar] = useState(null)
-    let [user, setUser] = useState(null)
-    let [origin, setOrigin] = useState('')
+  const queryUser = async (user) => {
+    setUser(user);
+    let res = await axios({
+      url: "https://wrapapi.com/use/tomas-b/github/grid/latest",
+      method: "post",
+      data: {
+        wrapAPIKey: "eF1EOVpNlFuSQfuIqDmrw2Fp1ZT3LZqy",
+        username: user,
+      },
+    });
 
-    const queryUser = async user => {
-        setUser(user)
-        // let res = await fetch(`https://gitgreen.herokuapp.com/user/${user}`)
-        let res = await axios({
-            url: "https://wrapapi.com/use/tomas-b/github/grid/latest",
-            method: 'post',
-            data: {
-                "wrapAPIKey": "eF1EOVpNlFuSQfuIqDmrw2Fp1ZT3LZqy",
-                "username": user
-            }
-        })
+    let newfield = res.data.map((day) => {
+      day.added = 0;
+      return day;
+    });
 
-        let newfield = res.data.map(day=>{ day.added = 0; return day })
-        setCalendar(newfield)
-        setOrigin(`https://github.com/${user}/greens.git`)
+    setCalendar(newfield);
+  };
+
+  const generateCommits = (calendar) => {
+    let top = 0;
+    for (let day of calendar) {
+      if (+day.count > top) {
+        top = day.count;
+      }
     }
 
-    const generateCommits = () => {
-        let top = 0;
-        for(let day of calendar) {
-            if(+day.count > top) {
-                top = day.count
-                console.log(top)
-            }
-        }
+    let commits = [];
+    let unit = Math.floor(top * 0.25); // bad aprox.
 
-        let commits = [];
-        let unit = Math.floor(top*.25) // bad aprox.
-
-        for(let day of calendar) {
-            if(day.added > 0) {
-                let cnt = day.added*unit;
-                commits.push(`echo ${Math.random()} > ${day.date}.txt`)
-                commits.push(`git add ${day.date}.txt`)
-                while(cnt>0) {
-                    commits.push(`echo ${Math.random()} > ${day.date}.txt`)
-                    commits.push(`git commit -m '.' --date='${day.date}_13-37-${cnt}' -a`);
-                    cnt--;
-                }
-            }
-        }
-
-        let commands = [
-            ['mkdir dir && cd dir'],
-            ['git init'],
-            ... commits, 
-            [`git remote add origin ${origin}`],
-            [`git push origin master`],
-            [``]
-        ]
-
-        return commands.join('\n')
+    for (let day of calendar) {
+      if (day.added > 0) {
+        let cnt = day.added * unit;
+        commits.push([day.date, cnt]);
+      }
     }
 
-    return <div id='layout'>
-            <SearchBox queryUser={queryUser}/>
-            <Calendar calendar={calendar} setCalendar={setCalendar} user={user}/>
-            <div id='clickInfo'>
-            click - draw <br/>
+    return commits;
+  };
+
+  const generateAndPush = () => {
+    window.localStorage.setItem("calendar", JSON.stringify(calendar));
+    window.localStorage.setItem("user", JSON.stringify(user));
+    window.localStorage.setItem(
+      "commits",
+      JSON.stringify(generateCommits(calendar))
+    );
+    window.location =
+      "https://github.com/login/oauth/authorize?client_id=0d5dbf7a901181653dd5&scope=public_repo";
+  };
+
+  return (
+    <div id="layout">
+      <SearchBox queryUser={queryUser} user={user} />
+      <Calendar calendar={calendar} setCalendar={setCalendar} user={user} />
+      <Switch>
+        <Route path="/callback">
+          <GithubCB setCalendar={setCalendar} setUser={setUser} />
+        </Route>
+        <Route path="/">
+          <div id="clickInfo">
+            click - draw <br />
             click + shift - delete
+          </div>
+          {user && (
+            <div className="button" onClick={generateAndPush}>
+              <GithubSVG />
+              Create Commits & Push 'em!
             </div>
-            <OriginInput origin={origin} setOrigin={setOrigin}/>
-            <TextareaCopy commands={origin ? generateCommits() : ''} />
+          )}
+        </Route>
+      </Switch>
     </div>
+  );
+};
 
-}
+const GithubCB = ({ setCalendar, setUser }) => {
+  let [commits, setCommits] = useState(window.localStorage.getItem("commits"));
+  const { code } = queryString.parse(location.search);
 
-const TextareaCopy = props => {
+  useEffect(() => {
+    setCalendar(JSON.parse(window.localStorage.getItem("calendar")))
+    setUser(JSON.parse(window.localStorage.getItem("user")));
+  }, []);
 
-    const textarea = useRef(null)
-
-    const clipboard = ()=>{
-        // copy props.commands
-        textarea.current.select()
-        document.execCommand('copy')
-    }
-
-    return <>
-        <button id='copy' onClick={clipboard}>copy to clipboard!</button>
-        <textarea readOnly ref={textarea} value={props.commands}></textarea>
+  let url = `https://gitgreen.herokuapp.com/cb/${code}?commmits=${commits}`;
+  return (
+    <>
+      <a href={url}>{url}</a>
     </>
-}
+  );
+};
 
-const OriginInput = props => {
-    let {origin, setOrigin} = props
-    return <div id='origin'>
-    <svg className="octicon octicon-repo UnderlineNav-octicon hide-sm" height="16" viewBox="0 0 16 16" version="1.1" width="16" aria-hidden="true">
-        <path fillRule="evenodd" d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"></path>
-    </svg>
-    remote repository:
-    <input placeholder='https://github.com/<user>/<repo>' value={origin} onChange={e=>setOrigin(e.target.value)}/>
+const SearchBox = ({user, queryUser}) => {
+
+    let [userInput, setUserInput] = useState(user)
+
+  useEffect(() => {
+    if (userInput !== null) {
+      const endOfTypingDelay = setTimeout(() => {
+        queryUser(userInput);
+      }, 500);
+      return () => clearTimeout(endOfTypingDelay);
+    }
+  }, [userInput]);
+
+  return (
+    <div id="searchbox">
+      <span>@</span>
+      <input
+        type="text"
+        placeholder="your github username..."
+        onChange={(e) => setUserInput(e.target.value)}
+        defaultValue={user}
+      />
     </div>
-}
+  );
+};
 
+const Calendar = (props) => {
+  let [tool, setTool] = useState("add");
+  let [mousedown, setMousedown] = useState(false);
 
-const SearchBox = props => {
+  useEffect(() => {
+    window.addEventListener("keydown", (e) => {
+      if (e.key == "Shift") setTool("remove");
+    });
+    window.addEventListener("keyup", (e) => {
+      if (e.key == "Shift") setTool("add");
+    });
+  }, []);
 
-    let [user, setUser] = useState(null)
+  const drawBox = (i) => {
+    if (!tool) return;
+    if (!mousedown) return;
+    let current = +props.calendar[i].level + props.calendar[i].added;
+    if (tool == "add" && current < 4) props.calendar[i].added += 1;
+    if (tool == "remove" && props.calendar[i].added > 0)
+      props.calendar[i].added -= 1;
+    props.setCalendar([...props.calendar]);
+  };
 
-    useEffect(()=>{
-        if(user!==null) {
-            const endOfTypingDelay = setTimeout(()=>{props.queryUser(user)}, 500)
-            return () => clearTimeout(endOfTypingDelay)
-        }
-    },[user])
-
-    return <div id='searchbox'>
-        <span>@</span>
-        <input type='text' placeholder='your github username...' onChange={e=>setUser(e.target.value)} />
-    </div>
-}
-
-const Calendar = props => {
-
-    let [tool, setTool] = useState('add')
-    let [mousedown, setMousedown] = useState(false)
-
-    useEffect(()=>{
-        window.addEventListener('keydown', e=>{ if(e.key == 'Shift') setTool('remove') })
-        window.addEventListener('keyup', e=>{ if(e.key == 'Shift') setTool('add') })
-    },[])
-
-    const drawBox = i => {
-        if(!tool) return;
-        if(!mousedown) return;
-        let current = + props.calendar[i].level + props.calendar[i].added;
-        if(tool == 'add' && current < 4) props.calendar[i].added += 1;
-        if(tool == 'remove' && props.calendar[i].added > 0) props.calendar[i].added -= 1;
-        props.setCalendar([...props.calendar])
+  const clickBox = (i) => {
+    let current = +props.calendar[i].level + props.calendar[i].added;
+    if (current < 4) {
+      props.calendar[i].added += 1;
+    } else {
+      props.calendar[i].added = 0;
     }
+    props.setCalendar([...props.calendar]);
+  };
 
-    const clickBox = i => {
-        let current = + props.calendar[i].level + props.calendar[i].added;
-        if(current < 4) {
-            props.calendar[i].added += 1;
-        } else {
-            props.calendar[i].added = 0;
-        }
-        props.setCalendar([...props.calendar])
-    }
-
-
-    if (props.calendar == null) {
-        // is props.user !== null then ajax request waiting
-        console.log(props)
-        return <>
-            <div className={`git-grid ${ props?.user !== null ? 'git-loading' : 'git-idle' }`}>
-            {Array(371).fill(null).map( (day, i) =>
-                <div key={i} className={`box`}></div>
-            )}
-            </div>
-            </>
-    }
-
-    return <>
-        <div className='git-grid' onMouseDown={()=>setMousedown(true)} onMouseUp={()=>setMousedown(false)}>
-        {props.calendar.map( (day, i) =>
-            <div key={day.date} onClick={()=>{clickBox(i)}} onMouseMove={()=>{drawBox(i)}} className={`box l${+day.level+day.added}`}></div>
-        )}
+  if (props.calendar == null) {
+    // is props.user !== null then ajax request waiting
+    console.log(props);
+    return (
+      <>
+        <div
+          className={`git-grid ${
+            props?.user !== null ? "git-loading" : "git-idle"
+          }`}
+        >
+          {Array(371)
+            .fill(null)
+            .map((day, i) => (
+              <div key={i} className={`box`}></div>
+            ))}
         </div>
-    </>
-}
+      </>
+    );
+  }
 
-ReactDOM.render(<App/>, document.querySelector('#root'))
+  return (
+    <>
+      <div
+        className="git-grid"
+        onMouseDown={() => setMousedown(true)}
+        onMouseUp={() => setMousedown(false)}
+      >
+        {props.calendar.map((day, i) => (
+          <div
+            key={day.date}
+            onClick={() => {
+              clickBox(i);
+            }}
+            onMouseMove={() => {
+              drawBox(i);
+            }}
+            className={`box l${+day.level + day.added}`}
+          ></div>
+        ))}
+      </div>
+    </>
+  );
+};
+
+const GithubSVG = () => (
+  <svg
+    height="30"
+    width="30"
+    role="img"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <title>GitHub</title>
+    <path
+      fill="white"
+      d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+    />
+  </svg>
+);
+
+ReactDOM.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+  document.querySelector("#root")
+);
